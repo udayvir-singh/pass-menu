@@ -74,7 +74,7 @@ function set-opt-path {
 function set-opt-mode {
 	local OPTION="${1}"
 
-	if [[ "${MODE}" ]]; then
+	if [[ "${MODE}" && "${MODE}" != "${OPTION}" ]]; then
 		error 'conflicting option "--%s" with "--%s"' "${OPTION}" "${MODE}"
 	fi
 
