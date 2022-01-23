@@ -208,31 +208,31 @@ function get-pass-value {
 	local PASS_KEY="${2}"
 
 	case "${PASS_KEY}" in 
-		OTP)      
-			pass otp "${PASS_NAME}" 
-		;;
+	OTP)      
+		pass otp "${PASS_NAME}" 
+	;;
 
-		Password) 
-			pass "${PASS_NAME}" | awk '
-			BEGIN { 
-				FS=": +"
-				password="Yes" 
-			} 
+	Password) 
+		pass "${PASS_NAME}" | awk '
+		BEGIN { 
+			FS=": +"
+			password="Yes" 
+		} 
 
-			NR == 1 && ! $2 { print $1; password=Null } 
+		NR == 1 && ! $2 { print $1; password=Null } 
 
-			/Password/ && $2 { if (password) print $2 }'
-		;;
+		/Password/ && $2 { if (password) print $2 }'
+	;;
 
-		*) 
-			pass "${PASS_NAME}" | awk -v key="${PASS_KEY}" '
-			BEGIN { FS=": +" }
+	*) 
+		pass "${PASS_NAME}" | awk -v key="${PASS_KEY}" '
+		BEGIN { FS=": +" }
 
-			$2 {
-				if ($1 ~ key)
-					for (i=2; i<=NF; i++) print $i
-	                }' 
-		;;
+		$2 {
+			if ($1 ~ key)
+				for (i=2; i<=NF; i++) print $i
+		}' 
+	;;
 	esac
 }
 
@@ -247,40 +247,53 @@ function get-action {
 }
 
 function execute-action {
-	local PASS_NAME="${1}"; shift
+	local PASS_NAME="${1}"
+	shift
 
 	while [ -n "${1}" ]; do
 		case "${1}" in
-			:clip)  clip-copy "$(get-pass-value "${PASS_NAME}" "${2}")"; shift 2 ;;
-			:type)  dotool-type "$(get-pass-value "${PASS_NAME}" "${2}")"; shift 2 ;;
-			:tab)   dotool-type "	"; shift 1 ;;
-			:sleep) sleep "${2}"; shift 2 ;;
-
-			:exec | :notify)
-				local ACT="${1}"
-				local STR="${2:1}"
-				shift 2
-				# Parse String
-				while [ ! "${STR:(-1)}" = '"' ]; do
-					if [ -z "${1}" ]; then
-						error 'unmatched {"} in %s.' "${PASS_NAME}"
-					fi
-
-					STR="${STR} ${1}"
-					shift 1
-				done
-
-				STR="${STR::(-1)}"
-
-				if [ "${ACT}" = ":exec" ]; then
-					sh -c "${STR}"
-				else 
-					notify-send "${STR}"
-				fi
+		:clip)
+			clip-copy "$(get-pass-value "${PASS_NAME}" "${2}")"
+			shift 2
+			;;
+		:type)
+			dotool-type "$(get-pass-value "${PASS_NAME}" "${2}")"
+			shift 2
+			;;
+		:tab)
+			dotool-type "	"
+			shift 1
+			;;
+		:sleep)
+			sleep "${2}"
+			shift 2
 			;;
 
-			:*) error "invalid action %s in %s" "${1}" "${PASS_NAME}" ;;
-			*)  error "invalid param %s in %s"  "${1}" "${PASS_NAME}" ;;
+		:exec | :notify)
+			local ACT="${1}"
+			local STR="${2:1}"
+			shift 2
+			# Parse String
+			while [ ! "${STR:(-1)}" = '"' ]; do
+				if [ -z "${1}" ]; then
+					error 'unmatched {"} in %s.' "${PASS_NAME}"
+				fi
+
+				STR="${STR} ${1}"
+				shift 1
+			done
+
+			STR="${STR::(-1)}"
+
+			if [ "${ACT}" = ":exec" ]; then
+				sh -c "${STR}"
+			else
+				notify-send "${STR}"
+			fi
+			;;
+
+		:*) error "invalid action %s in %s" "${1}" "${PASS_NAME}" ;;
+		*)  error "invalid param %s in %s" "${1}" "${PASS_NAME}" ;;
 		esac
 	done
 }
