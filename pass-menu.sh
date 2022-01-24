@@ -84,7 +84,7 @@ function set-opt-mode {
 function set-opt-timeout {
 	local OPTION="${1}"
 
-	if [[ ! "${OPTION}" =~ ^-?[0-9]+$ ]]; then
+	if [[ ! "${OPTION}" =~ ^[0-9]+$ ]]; then
 		error '"--timeout" must be an integer'
 	elif [[ "${OPTION}" -lt 10 ]]; then
 		error '"--timeout" must be greater than 10'
