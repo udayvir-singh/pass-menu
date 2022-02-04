@@ -62,7 +62,7 @@ Password: correct horse battery staple
 ```js
 action(<name>) <...actions> 
 ```
-#### actions can be one of:
+#### Actions can be one of:
 | Action            | Description                          |
 |-------------------|--------------------------------------|
 |`:tab`             | type out Tab key                     |
@@ -71,6 +71,23 @@ action(<name>) <...actions>
 |`:sleep {n}`       | wait for {n} amount of seconds       |
 |`:exec "string"`   | pass "string" to shell for execution |
 |`:notify "string"` | pass "string" to notify-send         |
+
+#### Actions Usage
+- Autofilling forms automatically
+```js
+action(Autofill) :type Username :tab :type Password :sleep 3 :type OTP
+```
+
+- Update password data
+```js
+action(Update) :exec "pass generate <pass_name>" :notify "Successfully Updated Password"
+```
+
+- Print out fortune (idk, I am bored)
+```js
+action(Fortune) :exec "fortune linux"
+```
+
 ### Examples
 `pass-menu` can be called in CLI by
 ```bash
