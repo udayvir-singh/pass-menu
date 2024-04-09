@@ -1,0 +1,503 @@
+.TH pass-menu 1 "Pass Menu" \fIpass-menu\fR(1) "Password Store Interface"
+
+.SH NAME
+pass-menu - A general frontend for password store
+
+.SH SYNOPSIS
+.B pass-menu
+.RB [ OPTIONS ]
+--
+.B COMMAND
+.RB [ ARGS ]
+
+.SH DESCRIPTION
+\fBpass-menu\fR is a command-line utility that provides a general
+interface to password store that works well with any command that
+accepts stdin. ie \fIfzf\fR(1), \fIdmenu\fR(1), \fIrofi\fR(1) and
+even \fIgrep\fR(1).
+
+\fBpass-menu\fR utilizes its own custom syntax for passfiles,
+refer to \fBPASSFILE SYNTAX\fR section for detailed information.
+
+.B Note:
+This command should not be confused with \fBpassmenu\fR command that
+ships by default with \fIpass\fR(1). The default \fBpassmenu\fR
+command is very limited in functionality and is designed specifically
+for \fIdmenu\fR(1).
+
+.SH OPTIONS
+.TP
+\fB-t\fR,\fB --type\fR
+Type the output, useful for filling text boxes in GUI applications.
+
+.TP
+\fB-c\fR,\fB --clip\fR
+Copy the output to the clipboard and then restore the clipboard
+after 45 (or PASSWORD_STORE_CLIP_TIME) seconds.
+
+.TP
+\fB-p\fR,\fB --print\fR
+Print the output to stdout.
+
+.TP
+\fB-l\fR,\fB --logger=\fITYPE\fR
+Set the logger type. Possible values are:
+
+.TS
+box nospaces tab(|);
+Lb | L.
+compact | Print POSIX errors and messages through stderr (default).
+human   | Print human-readable errors and messages through stderr.
+notify  | Print errors and messages through notifications.
+.TE
+
+.TP
+\fB-f\fR,\fB --prompt-flag=\fIFLAG\fR
+Flag passed to \fBCOMMAND\fR for prompting user.
+
+The values after short flag expand as described in the following table:
+
+.TS
+box nospaces tab(|);
+L | L | L.
+\fB-f\fIX\fR   | \fB-f\fR \fI-X\fR    | A single character is expanded to a short flag.
+\fB-f\fIXXX\fR | \fB-f\fR \fI--XXX\fR | Multiple characters are expanded to a long flag.
+.TE
+
+.TP
+\fB--file-prompt=\fIPROMPT\fR
+Prompt message when choosing a password store file.
+
+Default value for different menu commands:
+
+.TS
+box nospaces tab(|);
+Lb | L.
+fzf      | "file> "
+dmenu    | "file:"
+default  | "file"
+.TE
+
+.TP
+\fB--key-prompt=\fIPROMPT\fR
+Prompt message when choosing a key inside password store file.
+
+Default value for different menu commands:
+
+.TS
+box nospaces tab(|);
+Lb | L.
+fzf      | "key> "
+dmenu    | "key:"
+default  | "key"
+.TE
+
+.TP
+\fB--mode-prompt=\fIPROMPT\fR
+Prompt message when choosing \fBpass-menu\fR mode.
+
+Default value for different menu commands:
+
+.TS
+box nospaces tab(|);
+Lb | L.
+fzf      | "mode> "
+dmenu    | "mode:"
+default  | "mode"
+.TE
+
+.TP
+\fB-h\fR,\fB --help\fR
+Print the help message and exit.
+
+.SH ENVIRONMENT VARIABLES
+This section describes the environment variables that \fBpass-menu\fR
+borrows from \fIpass\fR(1):
+
+.TP
+.B PASSWORD_STORE_DIR
+Overrides the default password storage directory,
+by default \fB~/.password-store/\fR.
+
+.TP
+.B PASSWORD_STORE_X_SELECTION
+Overrides the selection passed to xclip, by default \fBclipboard\fR.
+See \fIxclip\fR(1) for more info.
+
+.TP
+.B PASSWORD_STORE_CLIP_TIME
+Specifies the number of seconds to wait before restoring the clipboard,
+by default \fB45\fR seconds.
+
+.SH EXAMPLES
+.TP
+.B FZF (Fuzzy Finder)
+
+.EX
+# Basic usage:
+$ \fBpass-menu\fR -- \fBfzf\fR
+
+# Copy a field from a password store file:
+$ \fBpass-menu\fR --clip -- \fBfzf\fR
+
+# Enable interactive input prompt:
+$ \fBpass-menu\fR -fprompt -- \fBfzf\fR
+$ \fBpass-menu\fR --prompt-flag="--prompt" -- \fBfzf\fR
+.EE
+
+.TP
+.B DMenu (Dynamic Menu)
+
+.EX
+# Basic usage:
+$ \fBpass-menu\fR -- \fBdmenu\fR
+
+# Type a field from a password store file:
+$ \fBpass-menu\fR --type -- \fBdmenu\fR
+
+# Enable interactive input prompt:
+$ \fBpass-menu\fR -fp -- \fBdmenu\fR
+$ \fBpass-menu\fR --prompt-flag="-p" -- \fBdmenu\fR
+.EE
+
+.TP
+.B Rofi
+
+.EX
+# Basic usage:
+$ \fBpass-menu\fR -- \fBrofi\fR -dmenu
+
+# Type a field from a password store file:
+$ \fBpass-menu\fR --type -- \fBrofi\fR -dmenu
+
+# Enable interactive input prompt:
+$ \fBpass-menu\fR -fp -- \fBrofi\fR -dmenu
+$ \fBpass-menu\fR --prompt-flag="-p" -- \fBdmenu\fR
+.EE
+
+.TP
+.B Non Interactive
+
+.EX
+# Using Grep (will not work if name of file and key are same)
+$ \fBpass-menu\fR --print -- \fBgrep\fR -E '^GitHub|Username$'
+
+# Using Bash
+$ \fBpass-menu\fR --print -f- -- \fBbash\fR -c '[ $1 = file ] && echo GitHub || echo Username'
+.EE
+
+.SH PASSFILE SYNTAX
+
+This section describes the custom syntax used by the parser for
+passfiles (password store files).
+
+Here's an example passfile:
+
+.TS
+box;
+L.
+correct-horse-battery-staple
+---
+Username: hello-world
+Email:    "${Username}@example.com"
+
+otpauth://totp/hello@example.com?secret=MV4AU&issuer=Example
+
+action(Autofill) :type Username :tab :type Password :clip OTP
+.TE
+
+A passfile supports four types of statements: the password line,
+fields, actions, and otpauth URIs. Any line that doesn't contain one
+of these statements is ignored by the parser.
+
+The following sections go into more detail about each component of the syntax.
+
+.TP
+.B Password Line
+
+The first line of the passfile gets treated as a field with \fBPassword\fR
+as the key if it isn't a field, an otpauth URI or an action.
+
+.B EXAMPLES
+
+The following table shows examples of password lines with their field
+equivalent counterparts.
+
+.TS
+allbox nospaces tab(|);
+Lb Lb
+L L.
+Password Line                | Field Counterpart
+correct-horse-battery-staple | Password: correct-horse-battery-staple
+Qnr9%5bZ.ZAurV7"?mqa         | Password: "Qnr9%5bZ.ZAurV7\\"?mqa"
+.TE
+
+.B EBNF DEFINATION
+
+.EX
+password-line = character+, "\\n";
+.EE
+
+.TP
+.B Field
+
+A key-value pair separated by colon is regarded is a field.
+
+The key must only contain the following characters \fB[-_a-zA-Z0-9]\fR
+and cannot be \fBOTP\fR as it's reserved for otpauth URIs.
+
+The value can either be raw text or a double quoted string.
+
+Any leading and trailing whitespace is trimmed from raw text in field values.
+If you want the whitespace then the value should be quoted in a string.
+
+.B EXAMPLES
+
+.TS
+allbox;
+L.
+Username: Example 123
+Hello_World: "hello ${Username}"
+.TE
+
+.B EBNF DEFINATION
+
+.EX
+field = field-key, ":", whitespace*, field-value, whitespace*, "\\n";
+
+field-key = identifier - "OTP";
+
+field-value = string | character+;
+.EE
+
+.TP
+.B Action
+
+Actions enable automation within \fBpass-menu\fR, performing tasks
+such as autofilling forms, updating passwords, etc.
+
+The action body consists of commands with an optional argument.
+The argument can be either a single word or a string value.
+
+.B COMMANDS
+
+.TS
+box nospaces tab(|);
+Lb | Lb
+L  | L.
+Command                   | Description
+_
+\fB:tab\fR                | Press the tab key.
+\fB:enter\fR              | Press the enter key.
+\fB:type\fR \fI<REF>\fR   | Type the field or OTP that matches the given reference.
+\fB:clip\fR \fI<REF>\fR   | Copy the field or OTP that matches the given reference to the clipboard.
+\fB:run\fR \fI<REFS>\fR   | Execute the comma separated list of actions that match the given reference.
+\fB:log\fR \fI<STR>\fR    | Log the message with the given string.
+\fB:sleep\fR \fI<DUR>\fR  | Delay for the given amount of time, accepts same arguments as \fIsleep\fR(1) command.
+\fB:exec\fR \fI<CMD>\fR   | Execute the given bash command with $1 set to current filename.
+.TE
+
+.B EXAMPLES
+
+.TS
+allbox;
+L.
+action(Autofill) :type Username :tab :type Password :clip OTP
+action(PassGen) :log "Updating password" :exec "(pass-gen; echo; pass $1 | tail +2) >>(pass insert -m $1)"
+action(Autofill_and_Update) :run Autofill,PassGen
+.TE
+
+.B EBNF DEFINATION
+
+.EX
+action = "action(", action-name, ")", whitespace+, (action-command, whitespace*)+, "\\n";
+
+action-command = action-command-name, [whitespace+, action-command-argument];
+
+action-command-name = ":", ("tab" | "enter" | "type" | "clip" | "run" | "log" | "sleep" | "exec");
+
+action-command-argument = string | (character - whitespace)+;
+.EE
+
+.TP
+.B Otpauth URI
+
+Any valid otpauth URI as described by Google Authenticator is allowed:
+
+.UR https://github.com/google/google-authenticator/wiki/Key-Uri-Format
+.UE
+
+Multiple otpauth URIs with the same label are not allowed.
+
+.B EXAMPLES
+
+.TS
+allbox;
+L.
+otpauth://hotp?counter=0&secret=JBSWY3DPEHPK3PXP
+otpauth://totp/Example:alice@google.com?secret=JBSWY3DPEHPK3PXP&issuer=Example
+.TE
+
+.B EBNF DEFINATION
+
+.EX
+otpauth-uri = "otpauth://", otpauth-type, ["/", [otpauth-label]], "?", otpauth-parameters, "\\n";
+
+otpauth-type = "totp" | "hotp";
+
+otpauth-label = character+;
+
+otpauth-parameters = otpauth-parameter, ("&", otpauth-parameter)*;
+
+otpauth-parameter = letter+, "=", (character - "&")+;
+.EE
+
+.TP
+.B String
+
+Any double quoted value is treated as a string, strings can contain
+escape characters and POSIX style variables with references to a field.
+
+Allowed escape sequences are \fB\\\\\fR, \fB\\$\fR and \fB\\"\fR.
+
+.B EXAMPLES
+
+.TS
+allbox;
+L.
+"A normal string."
+"A string with \\"escape\\" sequences."
+"A string with reference to username: ${Username}."
+"A string with reference to second username: ${Username[2]}"
+.TE
+
+.B EBNF DEFINATION
+
+.EX
+quote = "\\"";
+
+string = quote, (character - quote | variable | escape)*, quote;
+
+variable = "${", field-reference, "}";
+
+escape = "\\", ("\\" | "$" | quote);
+.EE
+
+.TP
+.B Identifier
+
+An identifier is a name given to a field or an action.
+It must only contain the following characters \fB[-_a-zA-Z0-9]\fR.
+
+Multiple fields and actions can share the same identifier.
+
+.B EBNF DEFINATION
+
+.EX
+identifier = (letter | digit | "-" | "_")+;
+.EE
+
+.TP
+.B Reference
+
+References are used to uniquely access data from a passfile.
+There are 3 different types of references for accessing fields,
+actions and otpauth URIs.
+
+.B FIELD REFERENCE
+
+A field reference begins with an identifier, excluding \fBOTP\fR, as
+it is reserved for otpauth URIs. It can optionally be followed by a
+natural number enclosed in square braces, indicating the index of the
+field to use. If no index is provided, it defaults to the first field.
+
+.TS
+allbox nospaces tab(|);
+Lb Lb
+L L.
+Example     | Description
+Username    | Select the first field with the key "Username".
+Username[1] | Same as above.
+Username[2] | Select the second field with the key "Username".
+.TE
+
+.B ACTION REFERENCE
+
+An action reference begins with an identifier enclosed in double round
+braces. It can optionally be followed by its index enclosed in square
+braces. If no index is provided, it defaults to the first action.
+
+Here are some examples of action references:
+
+.TS
+allbox nospaces tab(|);
+Lb Lb
+L L.
+Example         | Description
+((Autofill))    | Select the first action with the name "Autofill".
+((Autofill))[1] | Same as above.
+((Autofill))[2] | Select the second action with the name "Autofill".
+.TE
+
+.B OTP REFERENCE
+
+An OTP reference always begins with the \fBOTP\fR identifier. It can
+optionally be followed by its label enclosed in round braces or its
+index enclosed in square braces. If no label or index is provided, it
+defaults to the first otpauth URI.
+
+Here are some examples of otp references:
+
+.TS
+allbox nospaces tab(|);
+Lb Lb
+L L.
+Example              | Description
+OTP                  | Select the first otpauth URI.
+OTP[1]               | Same as above.
+OTP[2]               | Select the second otpauth URI.
+OTP(user@github.com) | Select the otpauth URI with the label "user@github.com".
+.TE
+
+.B EBNF DEFINATION
+
+.EX
+index = "[", digit - "0", digit*, "]";
+
+field-reference = field-key, [index];
+
+action-reference = "((", action-name, "))", [index];
+
+otp-reference = "OTP", [index | "(", otpauth-label, ")"];
+.EE
+
+.SH SEE ALSO
+.MR pass 1
+
+.SH AUTHOR
+Udayvir Singh
+.UR https://github.com/udayvir-singh
+.UE
+
+.SH LICENCE
+MIT License
+
+Copyright (c) 2024 Udayvir Singh
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
