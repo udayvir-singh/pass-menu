@@ -8,7 +8,7 @@ pass-menu - A general frontend for password store
 .RB [ OPTIONS ]
 --
 .B COMMAND
-.RB [ ARGS ]
+.RB [ ARGUMENTS ]
 
 .SH DESCRIPTION
 \fBpass-menu\fR is a command-line utility that provides a general
@@ -243,7 +243,7 @@ password-line = character+, "\\n";
 
 A key-value pair separated by colon is regarded is a field.
 
-The key must only contain the following characters \fB[-_a-zA-Z0-9]\fR
+The key must only contain the following characters \fB[-_a-zA-Z0-9<space><tab>]\fR
 and cannot be \fBOTP\fR as it's reserved for otpauth URIs.
 
 The value can either be raw text or a double quoted string.
@@ -257,13 +257,13 @@ If you want the whitespace then the value should be quoted in a string.
 allbox;
 L.
 Username: Example 123
-Hello_World: "hello ${Username}"
+Hello World: "hello ${Username}"
 .TE
 
 .B EBNF DEFINATION
 
 .EX
-field = field-key, ":", whitespace*, field-value, whitespace*, "\\n";
+field = whitespace*, field-key, whitespace*, ":", whitespace*, field-value, whitespace*, "\\n";
 
 field-key = identifier - "OTP";
 
@@ -304,13 +304,15 @@ allbox;
 L.
 action(Autofill) :type Username :tab :type Password :clip OTP
 action(PassGen) :log "Updating password" :exec "(pass-gen; echo; pass $1 | tail +2) >>(pass insert -m $1)"
-action(Autofill_and_Update) :run Autofill,PassGen
+action(Autofill and Update) :run Autofill,PassGen
 .TE
 
 .B EBNF DEFINATION
 
 .EX
 action = "action(", action-name, ")", whitespace+, (action-command, whitespace*)+, "\\n";
+
+action-name = identifier;
 
 action-command = action-command-name, [whitespace+, action-command-argument];
 
@@ -387,14 +389,19 @@ escape = "\\", ("\\" | "$" | quote);
 .B Identifier
 
 An identifier is a name given to a field or an action.
-It must only contain the following characters \fB[-_a-zA-Z0-9]\fR.
+It must only contain the following characters \fB[-_a-zA-Z0-9<space><tab>]\fR and must not be entirely whitespace.
 
 Multiple fields and actions can share the same identifier.
 
 .B EBNF DEFINATION
 
 .EX
-identifier = (letter | digit | "-" | "_")+;
+identifier = (
+    (letter | digit | "-" | "_")
+    | (letter | digit | "-" | "_"),
+      (letter | digit | "-" | "_" | " " | "\\t")*,
+      (letter | digit | "-" | "_")
+);
 .EE
 
 .TP

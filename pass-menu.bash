@@ -36,14 +36,14 @@ PASS_MODE="ask"
 # ---------------------- #
 #          REGEX         #
 # ---------------------- #
-readonly ID_REGEX='[-_[:alnum:]]+'
+readonly ID_REGEX='([-_[:alnum:]]|[-_[:alnum:]][-_[:alnum:][:blank:]]*[-_[:alnum:]])'
 readonly INDEX_REGEX='\[[1-9][0-9]*\]'
 
 is_otpauth () [[ "${1}" =~ ^otpauth:// ]]
 
 is_action () [[ "${1}" =~ ^action\( ]]
 
-is_field () [[ "${1}" =~ ^${ID_REGEX}: ]]
+is_field () [[ "${1}" =~ ^[[:blank:]]*${ID_REGEX}[[:blank:]]*: ]]
 
 is_identifier () [[ "${1}" =~ ^${ID_REGEX}$ ]]
 
@@ -266,12 +266,26 @@ shell_quote () {
     printf "'%s'" "${STR}"
 }
 
+trim_start () {
+    local STR="${1}"
+
+    [[ "${STR}" =~ ^[[:blank:]]* ]]
+
+    printf '%s' "${STR:${#BASH_REMATCH[0]}}"
+}
+
 trim_end () {
     local STR="${1}"
 
     [[ "${STR}" =~ [[:blank:]]*$ ]]
 
     printf '%s' "${STR:0:(( ${#STR} - ${#BASH_REMATCH[0]} ))}"
+}
+
+trim () {
+    local STR="${1}"
+
+    trim_start "$(trim_end "${STR}")"
 }
 
 url_decode () {
@@ -617,13 +631,15 @@ parse_field () {
     is_field "${BUFFER}" || use_error
 
     # parse key
-    local KEY
-    collect_till ':' KEY
+    local RAW_KEY
+    collect_till ':' RAW_KEY
+
+    local KEY="$(trim "${RAW_KEY}")"
 
     # validate key
     if [ "${KEY}" = OTP ]; then
         syntax_error "Field key cannot have a reserved name: OTP" "" \
-                     0 ${#KEY}
+                     0 ${#RAW_KEY}
     fi
 
     # skip colon
@@ -1222,7 +1238,7 @@ print_data () {
 # ---------------------- #
 print_help () {
     cat << EOF
-Usage: pass-menu [OPTIONS] -- COMMAND [ARGS]
+Usage: pass-menu [OPTIONS] -- COMMAND [ARGUMENTS]
 
 Options:
   -t, --type                  Type the output

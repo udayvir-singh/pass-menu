@@ -168,7 +168,7 @@ Email:    "${Username}@example.com"
 
 A key-value pair separated by colon is regarded is a field.
 
-The key must only contain the following characters `[-_a-zA-Z0-9]`
+The key must only contain the following characters `[-_a-zA-Z0-9<space><tab>]`
 and cannot be `OTP` as it's reserved for otpauth URIs.
 
 The value can either be raw text (as in the `Username` field)
