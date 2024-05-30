@@ -177,7 +177,7 @@ or a double quoted string (as in the `Email` field).
 The string value can contain escape characters (`\\`, `\$` and `\"`)
 and POSIX style variables with references to a field (for example: `${Username}`).
 
-Any leading and trailing whitespace is trimmed from raw text in field values.
+Any leading or trailing whitespace is trimmed from raw text in field values.
 If you want the whitespace then the value should be quoted in a string.
 
 ## Otpauth URI
