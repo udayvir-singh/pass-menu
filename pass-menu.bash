@@ -16,7 +16,8 @@ readonly PASSWORD_STORE_X_SELECTION="${PASSWORD_STORE_X_SELECTION:-clipboard}"
 # ---------------------- #
 #         GLOBALS        #
 # ---------------------- #
-FILENAME=""
+FILE_NAME=""
+KEY_NAME=""
 FILE=()
 DATA=()
 
@@ -103,13 +104,12 @@ else
 fi
 
 clip () {
-    local NAME="${1}"
-    local FILENAME="${2}"
+    local KEY_NAME="${1}"
     local STR; readstring STR
     local TIMER_NAME="password store sleep on display ${DISPLAY_NAME}"
 
     # message user when setting clipboard
-    info "Copied ${NAME} to clipboard. Will clear in ${PASSWORD_STORE_CLIP_TIME} seconds."
+    info "Copied ${KEY_NAME} to clipboard. Will clear in ${PASSWORD_STORE_CLIP_TIME} seconds."
 
     # spawn a background process
     {
@@ -127,7 +127,7 @@ clip () {
             clip_set "$(base64 --decode <<< "${ORIG}")"
 
             if [ "${LOG_TYPE}" = 'notify' ]; then
-                info "Cleared ${NAME} from clipboard."
+                info "Cleared ${KEY_NAME} from clipboard."
             fi
         fi
     } & disown
@@ -158,7 +158,7 @@ gen_otp () {
 
             FILE[${OTP_IDX}]="${BASH_REMATCH[1]}counter=${OTP_COUNTER}${BASH_REMATCH[2]}"
 
-            printf '%s\n' "${FILE[*]}" | write_pass_file "${FILENAME}"
+            printf '%s\n' "${FILE[*]}" | write_pass_file "${FILE_NAME}"
 
             CMD+=("--hotp" "--counter=${OTP_COUNTER}")
         ;;
@@ -190,10 +190,10 @@ run_action () {
             :enter)  press_enter ;;
             :run)    get_raw_value "${ARG}" | run_action ;;
             :type)   get_value "${ARG}" | type_str ;;
-            :clip)   get_value "${ARG}" | clip "${ARG}" "${FILENAME}" ;;
-            :logger)    info "${ARG}" ;;
+            :clip)   get_value "${ARG}" | clip "${ARG}" ;;
+            :logger) info "${ARG}" ;;
             :sleep)  sleep "${ARG}" ;;
-            :exec)   bash -c "${ARG}" -- "${FILENAME}" ;;
+            :exec)   bash -c "${ARG}" -- "${FILE_NAME}" ;;
             *)       use_error ;;
         esac
     done
@@ -213,15 +213,15 @@ list_pass_filenames () {
 }
 
 read_pass_file () {
-    local FILENAME="${1}"
+    local NAME="${1}"
 
-    pass show "${FILENAME}"
+    pass show "${NAME}"
 }
 
 write_pass_file () {
-    local FILENAME="${1}"
+    local NAME="${1}"
 
-    pass insert -m "${FILENAME}" </dev/stdin >/dev/null
+    pass insert -m "${NAME}" </dev/stdin >/dev/null
 }
 
 
@@ -361,13 +361,13 @@ info () {
 
     case "${LOG_TYPE}" in
         compact)
-            eprintf 'pass-menu: %s: %s\n' "${FILENAME}" "${MSG}"
+            eprintf 'pass-menu: %s: %s\n' "${FILE_NAME}" "${MSG}"
         ;;
         human)
-            eprintf 'Info: %s: %s\n' "${FILENAME}" "${MSG}"
+            eprintf 'Info: %s: %s\n' "${FILE_NAME}" "${MSG}"
         ;;
         notify)
-            notify-send "Pass Menu (${FILENAME})" "${MSG}"
+            notify-send "Pass Menu (${FILE_NAME})" "${MSG}"
         ;;
         *)
             eprintf 'pass-menu: Internal error: Invalid LOG_TYPE while calling %s' "${FUNCNAME}"
@@ -429,10 +429,10 @@ syntax_error () {
 
     case "${LOG_TYPE}" in
         compact)
-            eprintf 'pass-menu: Syntax error: %s:%d:%d: %s\n' "${FILENAME}" "${LINE}" "${ERR_OFFSET}" "${MSG}"
+            eprintf 'pass-menu: Syntax error: %s:%d:%d: %s\n' "${FILE_NAME}" "${LINE}" "${ERR_OFFSET}" "${MSG}"
         ;;
         human)
-            eprintf 'Syntax error in %s at line %d, column %d:\n' "${FILENAME}" "${LINE}" "${ERR_OFFSET}"
+            eprintf 'Syntax error in %s at line %d, column %d:\n' "${FILE_NAME}" "${LINE}" "${ERR_OFFSET}"
             eprintf '└─ %s\n\n' "${MSG}"
             eprintf '%s\n' "${BUFFER}"
             repeat ' ' "${ERR_OFFSET}"
@@ -445,7 +445,7 @@ syntax_error () {
         ;;
         notify)
             notify-send "Pass Menu (Syntax Error)" \
-                        "In ${FILENAME}:\nAt line ${LINE}, column ${ERR_OFFSET}:\n${MSG}"
+                        "In ${FILE_NAME}:\nAt line ${LINE}, column ${ERR_OFFSET}:\n${MSG}"
         ;;
         *)
             eprintf 'pass-menu: Internal error: Invalid LOG_TYPE while calling %s' "${FUNCNAME}"
@@ -1242,12 +1242,14 @@ Usage: pass-menu [OPTIONS] -- COMMAND [ARGUMENTS]
 
 Options:
   -t, --type                  Type the output
-  -c, --clip                  Copy output to clipboard
+  -c, --clip                  Copy the output to the clipboard
   -p, --print                 Print output to stdout
-  -l, --logger                   Set the logger type (options: compact, human, notify)
-  -f, --prompt-flag           Flag passed to COMMAND for prompting user
-      --file-prompt           Prompt message when choosing a password store file
-      --key-prompt            Prompt message when choosing a key inside password store file
+  -f, --filename              Manually set the password store filename
+  -k, --key                   Manually set the password store key
+  -l, --logger                Set the logger type (options: compact, human, notify)
+  -F, --prompt-flag           Flag passed to COMMAND for prompting the user
+      --file-prompt           Prompt message when choosing a password store filename
+      --key-prompt            Prompt message when choosing a password store key
       --mode-prompt           Prompt message when choosing pass-menu mode
   -h, --help                  Print this help message and exit
 
@@ -1257,13 +1259,13 @@ Logger Types:
   notify                      Print errors and messages through notifications
 
 Environment Variables:
-  PASSWORD_STORE_DIR          Path to the password storage directory
+  PASSWORD_STORE_DIR          Path to the password-store directory
   PASSWORD_STORE_CLIP_TIME    Number of seconds to wait before restoring the clipboard
-  PASSWORD_STORE_X_SELECTION  Name of the selection passed to xclip
+  PASSWORD_STORE_X_SELECTION  Name of the X selection to use for the clipboard
 
 Examples:
-  pass-menu --clip -- fzf
-  pass-menu --type -- dmenu -i -l 10
+  pass-menu -- fzf
+  pass-menu --type -- dmenu -l 10
 EOF
 }
 
@@ -1298,7 +1300,7 @@ expand_args () {
 
                         break
                     ;;
-                    f)
+                    F)
                         case $(( LEN - ++IDX  )) in
                             0) if [ -v 1 ]; then ARGS+=("$(shell_quote "${1}")"); shift 1; fi ;;
                             1) ARGS+=("-${ARG:${IDX}}") ;;
@@ -1314,7 +1316,7 @@ expand_args () {
             ARGS+=("${ARG}")
 
             case "${ARG}" in
-                --logger | --prompt-flag | --file-prompt | --key-prompt | --mode-prompt)
+                --filename | --key | --logger | --prompt-flag | --file-prompt | --key-prompt | --mode-prompt)
                     if [ -v 1 ]; then
                         ARGS+=("$(shell_quote "${1}")")
                         shift 1
@@ -1339,7 +1341,7 @@ expand_args () {
             break
         else
             # handle values
-            ARGS+=("$(shell_quote "${1}")")
+            ARGS+=("$(shell_quote "${ARG}")")
         fi
     done
 
@@ -1357,7 +1359,7 @@ validate_missing_arg () {
 fix_prompts () {
     # skip arguments until menu command is reached
     while [ -v 1 ]; do
-        if [ "${1}" = '-f' ] || [ "${1}" = '--prompt-flag' ]; then
+        if [ "${1}" = '-F' ] || [ "${1}" = '--prompt-flag' ]; then
             shift 2
         fi
 
@@ -1423,6 +1425,18 @@ parse_args () {
                 PASS_MODE="print"
                 shift 1
             ;;
+            -f  | --filename)
+                validate_missing_arg "${@}"
+
+                FILE_NAME="${2}"
+                shift 2
+            ;;
+            -k  | --key)
+                validate_missing_arg "${@}"
+
+                KEY_NAME="${2}"
+                shift 2
+            ;;
             -l | --logger)
                 validate_missing_arg "${@}"
 
@@ -1433,7 +1447,7 @@ parse_args () {
                 LOG_TYPE="${2}"
                 shift 2
             ;;
-            -f | --prompt-flag)
+            -F | --prompt-flag)
                 validate_missing_arg "${@}"
 
                 PROMPT_FLAG="${2}"
@@ -1477,7 +1491,11 @@ parse_args () {
     done
 
     # validate required arguments
-    if [ ${#MENU_CMD[@]} = 0 ]; then
+    if [ ${#MENU_CMD[@]} = 0 ] &&
+       ! ([ -n "${FILE_NAME}" ] &&
+          [ -n "${KEY_NAME}" ] &&
+          ([ "${PASS_MODE}" != ask ] || is_action_key "${KEY_NAME}"))
+    then
         read_error arguments "Missing menu command"
     fi
 }
@@ -1517,36 +1535,40 @@ main () {
     fi
 
     # interactively get filename
-    list_pass_filenames | call_menu_cmd "${FILE_PROMPT}" | readstring FILENAME
+    if [ -z "${FILE_NAME}" ]; then
+        list_pass_filenames | call_menu_cmd "${FILE_PROMPT}" | readstring FILE_NAME
+    fi
 
-    if ! is_pass_file "${FILENAME}"; then
-        read_error filename "File doesn't exist: $(quote "${FILENAME}")"
+    if ! is_pass_file "${FILE_NAME}"; then
+        read_error filename "File doesn't exist: $(quote "${FILE_NAME}")"
     fi
 
     # read and parse file
-    read_pass_file "${FILENAME}" | readarray FILE
+    read_pass_file "${FILE_NAME}" | readarray FILE
 
     parse_file
 
     if [ ${#DATA[@]} = 0 ]; then
-        read_error file "File doesn't have any data: $(quote "${FILENAME}")"
+        read_error file "File doesn't have any data: $(quote "${FILE_NAME}")"
     fi
 
     # interactively get key
-    list_keys | call_menu_cmd "${KEY_PROMPT}" | readstring KEY
+    if [ -z "${KEY_NAME}" ]; then
+        list_keys | call_menu_cmd "${KEY_PROMPT}" | readstring KEY_NAME
+    fi
 
-    if ! has_value "${KEY}"; then
-        read_error key "Key doesn't exist in ${FILENAME}: $(quote "${KEY}")"
+    if ! has_value "${KEY_NAME}"; then
+        read_error key "Key doesn't exist in ${FILE_NAME}): $(quote "${KEY_NAME}")"
     fi
 
     # early return on on action keys
-    if is_action_key "${KEY}"; then
-        get_raw_value "${KEY}" | run_action
+    if is_action_key "${KEY_NAME}"; then
+        get_raw_value "${KEY_NAME}" | run_action
         return
     fi
 
     # interactively get mode if not specified
-    if [ "${PASS_MODE}" = 'ask' ]; then
+    if [ "${PASS_MODE}" = ask ]; then
         printf 'type\nclip\nprint\n' | call_menu_cmd "${MODE_PROMPT}" | readstring PASS_MODE
 
         if ! oneof "${PASS_MODE}" 'type' 'clip' 'print'; then
@@ -1556,9 +1578,9 @@ main () {
 
     # run based on mode
     case "${PASS_MODE}" in
-        type)  get_value "${KEY}" | type_str ;;
-        clip)  get_value "${KEY}" | clip "${KEY}" "${FILENAME}" ;;
-        print) get_value "${KEY}" ;;
+        type)  get_value "${KEY_NAME}" | type_str ;;
+        clip)  get_value "${KEY_NAME}" | clip "${KEY_NAME}" ;;
+        print) get_value "${KEY_NAME}" ;;
         *)     internal_error "Invalid PASS_MODE in main"
     esac
 }
