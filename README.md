@@ -2,14 +2,14 @@
 
 `pass-menu` is a command-line utility that provides a general
 interface to password store that works well with any command that
-accepts stdin. ie `fzf`, `dmenu`, `rofi` and even `grep`.
+accepts stdin. ie `fzf`, `dmenu`, `rofi`, and even `grep`.
 
 ## Features
 
-- :penguin: Follows the UNIX philosophy, thus allowing easy integration with any CLI tool.
+- :penguin: Follows the UNIX philosophy, allowing easy integration with any CLI tool.
 - :briefcase: Written entirely in Bash, ensuring maximum portability.
 - :four_leaf_clover: Supports autofill and clipboard functionality on both Wayland and X11.
-- :floppy_disk: Utilizes a custom LR parser for passfiles, thus allowing support for:
+- :floppy_disk: Utilizes a custom LR parser for passfiles that supports:
   - :dart: Fields composed of key-value pairs separated by colons.
   - :closed_lock_with_key: OTP code generation from otpauth URIs.
   - :minidisc: Scriptable actions for automating passfiles.
@@ -35,7 +35,7 @@ $ git clone https://github.com/udayvir-singh/pass-menu.git
 
 $ cd pass-menu
 
-# To install pass-menu for current user:
+# To install pass-menu for the current user:
 $ make install
 
 # To install pass-menu globally for all users:
@@ -50,23 +50,25 @@ Refer to `make help` for more details about installation.
 pass-menu [OPTIONS] -- COMMAND [ARGS]
 ```
 
-| Option                                    | Description                                                    |
-|-------------------------------------------|----------------------------------------------------------------|
-| `-t`, `--type`                            | Type the output.                                               |
-| `-c`, `--clip`                            | Copy the output to the clipboard.                              |
-| `-p`, `--print`                           | Print the output to stdout.                                    |
-| `-l`, <code>--log=**TYPE**</code>         | Set the logger type. (options: compact, human, notify)         |
-| `-f`, <code>--prompt-flag=**FLAG**</code> | Flag passed to the menu command for prompting user.            |
-| <code>--file-prompt=**PROMPT**</code>     | Prompt message when choosing a password store file.            |
-| <code>--key-prompt=**PROMPT**</code>      | Prompt message when choosing a key inside password store file. |
-| <code>--mode-prompt=**PROMPT**</code>     | Prompt message when choosing pass-menu mode.                   |
-| `-h`, `--help`                            | Print the help message and exit.                               |
+| Option                                    | Description                                             |
+|-------------------------------------------|---------------------------------------------------------|
+| `-t`, `--type`                            | Type the output.                                        |
+| `-c`, `--clip`                            | Copy the output to the clipboard.                       |
+| `-p`, `--print`                           | Print the output to stdout.                             |
+| `-f`, <code>--filename=**NAME**</code>    | Manually set the password store filename.               |
+| `-k`, <code>--key=**NAME**</code>         | Manually set the password store key.                    |
+| `-l`, <code>--log=**TYPE**</code>         | Set the logger type. (options: compact, human, notify)  |
+| `-F`, <code>--prompt-flag=**FLAG**</code> | Flag passed to `COMMAND` for prompting the user.        |
+| <code>--file-prompt=**PROMPT**</code>     | Prompt message when choosing a password store filename. |
+| <code>--key-prompt=**PROMPT**</code>      | Prompt message when choosing a password store key.      |
+| <code>--mode-prompt=**PROMPT**</code>     | Prompt message when choosing pass-menu mode.            |
+| `-h`, `--help`                            | Print the help message and exit.                        |
 
 Refer to `pass-menu --help` or `man pass-menu` for more details.
 
 ## Examples
 
-The following examples were taken from `man pass-menu`:
+The following examples are taken from `man pass-menu`:
 
 ### FZF (Fuzzy Finder)
 
@@ -78,7 +80,7 @@ $ pass-menu -- fzf
 $ pass-menu --clip -- fzf
 
 # Enable interactive input prompt:
-$ pass-menu -fprompt -- fzf
+$ pass-menu -Fprompt -- fzf
 $ pass-menu --prompt-flag="--prompt" -- fzf
 ```
 
@@ -92,7 +94,7 @@ $ pass-menu -- dmenu
 $ pass-menu --type -- dmenu
 
 # Enable interactive input prompt:
-$ pass-menu -fp -- dmenu
+$ pass-menu -Fp -- dmenu
 $ pass-menu --prompt-flag="-p" -- dmenu
 ```
 
@@ -106,18 +108,18 @@ $ pass-menu -- rofi -dmenu
 $ pass-menu --type -- rofi -dmenu
 
 # Enable interactive input prompt:
-$ pass-menu -fp -- rofi -dmenu
-$ pass-menu --prompt-flag="-p" -- dmenu
+$ pass-menu -Fp -- rofi -dmenu
+$ pass-menu --prompt-flag="-p" -- rofi -dmenu
 ```
 
-### Non Interactive
+### Non-Interactive
 
 ```bash
-# Using Grep (will not work if name of file and key are same)
-$ pass-menu --print -- grep -E '^GitHub|Username$'
+# Basic usage:
+$ pass-menu --print --filename "Github" --key "Password"
 
-# Using Bash
-$ pass-menu --print -f- -- bash -c '[ $1 = file ] && echo GitHub || echo Username'
+# The above example also works with actions:
+$ pass-menu --filename "Github" --key "((Autofill))"
 ```
 
 # Passfile Syntax
@@ -140,20 +142,20 @@ otpauth://totp/hello@example.com?secret=MV4AU&issuer=Example
 action(Autofill) :type Username :tab :type Password :clip OTP
 ```
 
-The following sections go into more detail about each component of the syntax.
+The following sections provide more details about each component of the syntax.
 
-## Password line
+## Password Line
 
 ```
 correct-horse-battery-staple
 ```
 
 The first line of the passfile is called the password line if it isn't
-a field, an otpauth URI or an action. The password line is treated the
+a field, an otpauth URI, or an action. The password line is treated the
 same as a field with `Password` as the key.
 
 The above example can also be converted to a field.
-Hence, the following is same as the above example:
+Hence, the following is the same as the above example:
 
 ```
 Password: correct-horse-battery-staple
@@ -166,7 +168,7 @@ Username: hello-world
 Email:    "${Username}@example.com"
 ```
 
-A key-value pair separated by colon is regarded is a field.
+A key-value pair separated by a colon is regarded as a field.
 
 The key must only contain the following characters `[-_a-zA-Z0-9<space><tab>]`
 and cannot be `OTP` as it's reserved for otpauth URIs.
@@ -174,11 +176,11 @@ and cannot be `OTP` as it's reserved for otpauth URIs.
 The value can either be raw text (as in the `Username` field)
 or a double quoted string (as in the `Email` field).
 
-The string value can contain escape characters (`\\`, `\$` and `\"`)
+The string value can contain escape characters (`\\`, `\$`, and `\"`)
 and POSIX style variables with references to a field (for example: `${Username}`).
 
 Any leading or trailing whitespace is trimmed from raw text in field values.
-If you want the whitespace then the value should be quoted in a string.
+If you want the whitespace, then the value should be quoted in a string.
 
 ## Otpauth URI
 
@@ -218,4 +220,4 @@ The following table explains all of the action commands:
 | `:run <REFS>`  | Execute the comma separated list of actions that match the given reference.    |
 | `:log <STR>`   | Log the message with the given string.                                         |
 | `:sleep <DUR>` | Delay for the given amount of time, accepts same arguments as `sleep` command. |
-| `:exec <CMD>`  | Execute the given bash command with `$1` set to current filename.              |
+| `:exec <CMD>`  | Execute the given bash command with `$1` set to the current filename.          |
