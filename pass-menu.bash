@@ -151,8 +151,8 @@ gen_otp () {
             [ -v PARAMS[period] ] && CMD+=("--time-step-size=${PARAMS[period]}s")
         ;;
         hotp)
-            local OTP_COUNTER=$(( ${PARAMS[counter]} + 1 ))
-            local OTP_IDX=$(( ${PARAMS[line]} - 1 ))
+            local OTP_COUNTER=$(( PARAMS[counter] + 1 ))
+            local OTP_IDX=$(( PARAMS[line] - 1 ))
 
             [[ "${FILE[${OTP_IDX}]}" =~ ^(otpauth://[^?]+?.*)counter=[0-9]+(.*)$ ]] || use_error
 
@@ -230,8 +230,8 @@ write_pass_file () {
 # ---------------------- #
 oneof () {
     local STR="${1}"; shift
-
     local ARG
+
     for ARG in "${@}"; do
         [ "${STR}" = "${ARG}" ] && return 0
     done
@@ -255,15 +255,6 @@ quote () {
     STR="${STR//$'\n'/\\n}"
 
     printf '"%s"' "${STR}"
-}
-
-shell_quote () {
-    local STR="${1}"
-
-    STR="${STR//\'/\'\\\'\'}"
-    STR="${STR//$'\n'/\'$\'\\n\'\'}"
-
-    printf "'%s'" "${STR}"
 }
 
 trim_start () {
@@ -321,13 +312,13 @@ readassoc () {
     local VAR="${1}"
     local ARR; readarray ARR
     local LEN=${#ARR[@]}
+    local IDX
 
     if [ ! "$(getattr "${VAR}")" = 'A' ]; then
         unset "${VAR}"
         declare -gA "${VAR}=()"
     fi
 
-    local IDX
     for (( IDX = 0; IDX < LEN; IDX += 2 )); do
         local KEY="${ARR[${IDX}]}"
         local VAL="${ARR[(( IDX + 1 ))]?Missing value after key}"
@@ -840,8 +831,8 @@ parse_otpauth () {
 
     # convert associative params into array value
     local ARRAY=()
-
     local KEY
+
     for KEY in "${!PARAMS[@]}"; do
         ARRAY+=("${KEY}" "${PARAMS[${KEY}]}")
     done
@@ -1064,7 +1055,7 @@ list_keys () {
         fi
 
         # print key
-        if [ "${HAS_DUPLICATE}" -eq 1 ]; then
+        if [ "${HAS_DUPLICATE}" = 1 ]; then
             if is_otp_key "${KEY}"; then
                 declare -A PARAMS=()
 
@@ -1294,7 +1285,7 @@ expand_args () {
                         if (( ++IDX < LEN )); then
                             ARGS+=("${ARG:${IDX}}")
                         elif [ -v 1 ]; then
-                            ARGS+=("$(shell_quote "${1}")")
+                            ARGS+=("$(printf '%q' "${1}")")
                             shift 1
                         fi
 
@@ -1302,7 +1293,7 @@ expand_args () {
                     ;;
                     F)
                         case $(( LEN - ++IDX  )) in
-                            0) if [ -v 1 ]; then ARGS+=("$(shell_quote "${1}")"); shift 1; fi ;;
+                            0) if [ -v 1 ]; then ARGS+=("$(printf '%q' "${1}")"); shift 1; fi ;;
                             1) ARGS+=("-${ARG:${IDX}}") ;;
                             *) ARGS+=("--${ARG:${IDX}}") ;;
                         esac
@@ -1318,7 +1309,7 @@ expand_args () {
             case "${ARG}" in
                 --filename | --key | --logger | --prompt-flag | --file-prompt | --key-prompt | --mode-prompt)
                     if [ -v 1 ]; then
-                        ARGS+=("$(shell_quote "${1}")")
+                        ARGS+=("$(printf '%q' "${1}")")
                         shift 1
                     fi
                 ;;
@@ -1327,21 +1318,21 @@ expand_args () {
             # parse option=value pairs
             ARGS+=(
                 "${BASH_REMATCH[1]}"
-                "$(shell_quote "${BASH_REMATCH[2]}")"
+                "$(printf '%q' "${BASH_REMATCH[2]}")"
             )
         elif [[ "${ARG}" = '--' ]]; then
             # handle options separator
             ARGS+=("${ARG}")
 
             while [ -v 1 ]; do
-                ARGS+=("$(shell_quote "${1}")")
+                ARGS+=("$(printf '%q' "${1}")")
                 shift
             done
 
             break
         else
             # handle values
-            ARGS+=("$(shell_quote "${ARG}")")
+            ARGS+=("$(printf '%q' "${ARG}")")
         fi
     done
 
@@ -1356,27 +1347,25 @@ validate_missing_arg () {
     fi
 }
 
-fix_prompts () {
-    # skip arguments until menu command is reached
+fix_default_prompts () {
     while [ -v 1 ]; do
         if [ "${1}" = '-F' ] || [ "${1}" = '--prompt-flag' ]; then
             shift 2
         fi
 
         if [ "${1}" = '--' ]; then
-            # handle menu command
-            case "$(basename -- "${2:-}")" in
-                dmenu)
+            case "/${2:-}" in
+                */dmenu)
                     # append colon to dmenu prompts
-                    FILE_PROMPT="${FILE_PROMPT}:"
-                    KEY_PROMPT="${KEY_PROMPT}:"
-                    MODE_PROMPT="${MODE_PROMPT}:"
+                    FILE_PROMPT+=":"
+                    KEY_PROMPT+=":"
+                    MODE_PROMPT+=":"
                 ;;
-                fzf)
+                */fzf)
                     # append angle brackets to fzf prompts
-                    FILE_PROMPT="${FILE_PROMPT}> "
-                    KEY_PROMPT="${KEY_PROMPT}> "
-                    MODE_PROMPT="${MODE_PROMPT}> "
+                    FILE_PROMPT+="> "
+                    KEY_PROMPT+="> "
+                    MODE_PROMPT+="> "
                 ;;
             esac
 
@@ -1389,12 +1378,11 @@ fix_prompts () {
 
 parse_args () {
     # expand arguments
-    local ARGS; ARGS="$(expand_args "${@}")"
-
-    eval set -- ${ARGS}
+    eval set -- $(expand_args "${@}")
 
     # check for help flag
     local ARG
+
     for ARG in "${@}"; do
         case "${ARG}" in
             # print help and exit
@@ -1407,8 +1395,8 @@ parse_args () {
         esac
     done
 
-    # fix prompts
-    fix_prompts "${@}"
+    # fix default prompts
+    fix_default_prompts "${@}"
 
     # parse arguments
     while [ -v 1 ]; do
