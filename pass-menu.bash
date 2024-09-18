@@ -191,7 +191,7 @@ run_action () {
             :run)    get_raw_value "${ARG}" | run_action ;;
             :type)   get_value "${ARG}" | type_str ;;
             :clip)   get_value "${ARG}" | clip "${ARG}" ;;
-            :logger) info "${ARG}" ;;
+            :log)    info "${ARG}" ;;
             :sleep)  sleep "${ARG}" ;;
             :exec)   bash -c "${ARG}" -- "${FILE_NAME}" ;;
             *)       use_error ;;
