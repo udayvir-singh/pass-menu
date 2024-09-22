@@ -12,7 +12,7 @@ endif
 #          HELP          #
 # ---------------------- #
 help:
-	echo 'Usage: make [VARIABLE] [TARGET] ...'
+	echo 'Usage: make [VARIABLES] [TARGETS]'
 	echo
 	echo 'Targets:'
 	echo '  install    Install pass-menu on this system'
@@ -20,10 +20,10 @@ help:
 	echo '  help       Print this help message and exit'
 	echo
 	echo 'Environment Variables:'
-	echo '  PREFIX     Prefix for install paths (default: ~/.local)'
-	echo '  BIN_DIR    Prefix for executable directory (default: $$PREFIX/bin)'
-	echo '  MAN_DIR    Prefix for man pages directory (default: $$PREFIX/share/man/man1)'
-	echo '  VERBOSE    Whether to print each command before executing'
+	echo '  PREFIX     Prefix for installation paths    (default: $$HOME/.local)'
+	echo '  BIN_DIR    Directory for executables        (default: $$PREFIX/bin)'
+	echo '  MAN_DIR    Directory for manual pages       (default: $$PREFIX/share/man/man1)'
+	echo '  VERBOSE    Enable verbose command execution (default: <unset>)'
 	echo
 	echo 'Examples:'
 	echo '  make install'
@@ -35,46 +35,35 @@ help:
 # ---------------------- #
 install:
 	echo :: INSTALLING PASS MENU
-	$(call install, 0755, ./pass-menu.bash, $(BIN_DIR)/pass-menu)
-	$(call install, 0644, ./pass-menu.1, $(MAN_DIR)/pass-menu.1)
+	$(call install, 0755, ./pass-menu.bash, "$(BIN_DIR)/pass-menu")
+	$(call install, 0644, ./pass-menu.1, "$(MAN_DIR)/pass-menu.1")
 	echo :: DONE
 
 uninstall:
 	echo :: UNINSTALLING PASS MENU
-	$(call remove, $(BIN_DIR)/pass-menu)
-	$(call remove, $(MAN_DIR)/pass-menu.1)
+	$(call remove, "$(BIN_DIR)/pass-menu")
+	$(call remove, "$(MAN_DIR)/pass-menu.1")
 	echo :: DONE
 
 
 # ----------------------- #
 #          UTILS          #
 # ----------------------- #
-define success
-	echo -e "  \e[1;32m==>\e[0m"
-endef
-
-define failure
-	echo -e "  \e[1;31m==>\e[0m"
+define exec
+	TMP_FILE="$$(mktemp)"
+	if $(1) 2> "$${TMP_FILE}"; then
+		printf "  \033[1;32m==>\033[0m %s\n" $(2)
+	else
+		printf "  \033[1;31m==>\033[0m %s\n" $(2)
+		sed "s/^/      /" "$${TMP_FILE}"
+	fi
+	rm "$${TMP_FILE}"
 endef
 
 define install
-	TMP_FILE=$$(mktemp)
-	if install -D -m $(1) $(2) $(3) 2>$$TMP_FILE; then
-		$(success) $(2)
-	else
-		$(failure) $(2)
-		sed "s/^/      /" $$TMP_FILE
-	fi
-	rm $$TMP_FILE
+	$(call exec, install -Dm $(1) -- $(2) $(3), $(2))
 endef
 
 define remove
-	TMP_FILE=$$(mktemp)
-	if rm $(1) 2>$$TMP_FILE; then
-		$(success) $(1)
-	else
-		$(failure) $(1)
-		sed "s/^/      /" $$TMP_FILE
-	fi
-	rm $$TMP_FILE
+	$(call exec, rm -r -- $(1), $(1))
 endef
