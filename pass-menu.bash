@@ -1307,7 +1307,8 @@ expand_args () {
             ARGS+=("${ARG}")
 
             case "${ARG}" in
-                --filename | --key | --logger | --prompt-flag | --file-prompt | --key-prompt | --mode-prompt)
+                --filename | --key | --logger | --prompt-flag |\
+                --file-prompt | --key-prompt | --mode-prompt)
                     if [ -v 1 ]; then
                         ARGS+=("$(printf '%q' "${1}")")
                         shift 1
@@ -1380,18 +1381,27 @@ parse_args () {
     # expand arguments
     eval set -- $(expand_args "${@}")
 
-    # check for help flag
-    local ARG
+    # handle help flag
+    local ARGS=("${@}")
 
-    for ARG in "${@}"; do
-        case "${ARG}" in
-            # print help and exit
+    while [[ -v ARGS[0] ]] && [ "${ARGS[0]}" != -- ]; do
+        case "${ARGS[0]}" in
             -h | --help)
                 print_help
                 exit 0
             ;;
-            # stop searching after argument separator
-            --) break ;;
+            -f | --filename |\
+            -k | --key |\
+            -l | --logger |\
+            -F | --prompt-flag |\
+            --file-prompt |\
+            --key-prompt |\
+            --mode-prompt)
+                ARGS=("${ARGS[@]:2}")
+            ;;
+            *)
+                ARGS=("${ARGS[@]:1}")
+            ;;
         esac
     done
 
@@ -1413,13 +1423,13 @@ parse_args () {
                 PASS_MODE="print"
                 shift 1
             ;;
-            -f  | --filename)
+            -f | --filename)
                 validate_missing_arg "${@}"
 
                 FILE_NAME="${2}"
                 shift 2
             ;;
-            -k  | --key)
+            -k | --key)
                 validate_missing_arg "${@}"
 
                 KEY_NAME="${2}"
