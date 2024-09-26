@@ -124,10 +124,8 @@ $ pass-menu --filename "Github" --key "((Autofill))"
 
 # Passfile Syntax
 
-`pass-menu` uses its own custom parser for parsing passfiles.
+`pass-menu` uses its own custom parser for reading passfiles.
 This section provides a brief overview of the passfile syntax.
-
-For complete details, refer to the `PASSFILE SYNTAX` section in `man pass-menu`.
 
 Here's an example passfile:
 
@@ -144,18 +142,19 @@ action(Autofill) :type Username :tab :type Password :clip OTP
 
 The following sections provide more details about each component of the syntax.
 
+For complete details, refer to the `PASSFILE SYNTAX` section in `man pass-menu`.
+
 ## Password Line
 
 ```
 correct-horse-battery-staple
 ```
 
-The first line of the passfile is called the password line if it isn't
-a field, an otpauth URI, or an action. The password line is treated the
-same as a field with `Password` as the key.
+The first line of the passfile gets treated as a field with `Password`
+as the key if it doesn't match a field, an otpauth URI, or an action.
 
-The above example can also be converted to a field.
-Hence, the following is the same as the above example:
+The above example can also be converted to a field,
+hence, the above example is the same as the following:
 
 ```
 Password: correct-horse-battery-staple

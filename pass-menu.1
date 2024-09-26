@@ -197,7 +197,7 @@ $ pass-menu --filename "Github" --key "((Autofill))"
 .SH PASSFILE SYNTAX
 
 This section describes the custom syntax used by the parser for
-passfiles (password store files).
+reading passfiles (password store files).
 
 Here's an example passfile:
 
@@ -224,7 +224,7 @@ The following sections go into more detail about each component of the syntax.
 .B Password Line
 
 The first line of the passfile gets treated as a field with \fBPassword\fR
-as the key if it isn't a field, an otpauth URI, or an action.
+as the key if it doesn't match a field, an otpauth URI, or an action.
 
 .B EXAMPLES
 
