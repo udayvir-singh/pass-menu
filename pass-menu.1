@@ -188,10 +188,10 @@ $ \fBpass-menu\fR --prompt-flag="-p" -- \fBrofi\fR -dmenu
 
 .EX
 # Basic usage:
-$ pass-menu --print --filename "Github" --key "Password"
+$ pass-menu --print --filename "GitHub" --key "Password"
 
 # The above example also works with actions:
-$ pass-menu --filename "Github" --key "((Autofill))"
+$ pass-menu --filename "GitHub" --key "((Autofill))"
 .EE
 
 .SH PASSFILE SYNTAX
@@ -199,7 +199,7 @@ $ pass-menu --filename "Github" --key "((Autofill))"
 This section describes the custom syntax used by the parser for
 reading passfiles (password store files).
 
-Here's an example passfile:
+Here is an example password store file:
 
 .TS
 box;
@@ -240,7 +240,7 @@ correct-horse-battery-staple | Password: correct-horse-battery-staple
 Qnr9%5bZ.ZAurV7"?mqa         | Password: "Qnr9%5bZ.ZAurV7\\"?mqa"
 .TE
 
-.B EBNF DEFINATION
+.B EBNF DEFINITION
 
 .EX
 password-line = character+, "\\n";
@@ -268,7 +268,7 @@ Username: Example 123
 Hello World: "hello ${Username}"
 .TE
 
-.B EBNF DEFINATION
+.B EBNF DEFINITION
 
 .EX
 field = whitespace*, field-key, whitespace*, ":", whitespace*, field-value, whitespace*, "\\n";
@@ -299,9 +299,9 @@ _
 \fB:enter\fR              | Press the enter key.
 \fB:type\fR \fI<REF>\fR   | Type the field or OTP that matches the given reference.
 \fB:clip\fR \fI<REF>\fR   | Copy the field or OTP that matches the given reference to the clipboard.
-\fB:run\fR \fI<REFS>\fR   | Execute the comma separated list of actions that match the given reference.
+\fB:run\fR \fI<REFS>\fR   | Execute comma separated list of the given action references.
 \fB:log\fR \fI<STR>\fR    | Log the message with the given string.
-\fB:sleep\fR \fI<DUR>\fR  | Delay for the given amount of time, accepts same arguments as \fIsleep\fR(1) command.
+\fB:sleep\fR \fI<DUR>\fR  | Delay execution for the given amount of time, accepts same arguments as \fIsleep\fR(1) command.
 \fB:exec\fR \fI<CMD>\fR   | Execute the given bash command with $1 set to the current filename.
 .TE
 
@@ -312,10 +312,10 @@ allbox;
 L.
 action(Autofill) :type Username :tab :type Password :clip OTP
 action(PassGen) :log "Updating password" :exec "(pass-gen; echo; pass $1 | tail +2) >>(pass insert -m $1)"
-action(Autofill and Update) :run Autofill,PassGen
+action(Autofill and PassGen) :run Autofill,PassGen
 .TE
 
-.B EBNF DEFINATION
+.B EBNF DEFINITION
 
 .EX
 action = "action(", action-name, ")", whitespace+, (action-command, whitespace*)+, "\\n";
@@ -348,7 +348,7 @@ otpauth://hotp?counter=0&secret=JBSWY3DPEHPK3PXP
 otpauth://totp/Example:alice@google.com?secret=JBSWY3DPEHPK3PXP&issuer=Example
 .TE
 
-.B EBNF DEFINATION
+.B EBNF DEFINITION
 
 .EX
 otpauth-uri = "otpauth://", otpauth-type, ["/", [otpauth-label]], "?", otpauth-parameters, "\\n";
@@ -381,7 +381,7 @@ L.
 "A string with reference to second username: ${Username[2]}"
 .TE
 
-.B EBNF DEFINATION
+.B EBNF DEFINITION
 
 .EX
 quote = "\\"";
@@ -402,7 +402,7 @@ must not be entirely whitespace.
 
 Multiple fields and actions can share the same identifier.
 
-.B EBNF DEFINATION
+.B EBNF DEFINITION
 
 .EX
 identifier = (
@@ -475,7 +475,7 @@ OTP[2]               | Select the second otpauth URI.
 OTP(user@github.com) | Select the otpauth URI with the label "user@github.com".
 .TE
 
-.B EBNF DEFINATION
+.B EBNF DEFINITION
 
 .EX
 index = "[", digit - "0", digit*, "]";
@@ -488,7 +488,9 @@ otp-reference = "OTP", [index | "(", otpauth-label, ")"];
 .EE
 
 .SH SEE ALSO
-.MR pass 1
+.MR pass 1 ,
+.MR pass-gen 1 ,
+.MR pass-genf 1
 
 .SH AUTHOR
 Udayvir Singh

@@ -19,26 +19,25 @@ accepts stdin. ie `fzf`, `dmenu`, `rofi`, and even `grep`.
 - [bash](https://www.gnu.org/software/bash)
 - [find](https://www.gnu.org/software/findutils)
 - [pass](https://git.zx2c4.com/password-store)
-- [libnotify](https://gitlab.gnome.org/GNOME/libnotify) (optional for notification support)
-- [oathtool](https://www.nongnu.org/oath-toolkit) (optional for generating OTP codes)
+- [libnotify](https://gitlab.gnome.org/GNOME/libnotify) (optional, for notification support)
+- [oathtool](https://www.nongnu.org/oath-toolkit) (optional, for generating OTP codes)
 - X11
-  - [xclip](https://github.com/astrand/xclip) (optional for clipboard support)
-  - [xdotool](https://github.com/jordansissel/xdotool) (optional for autofill support)
+  - [xclip](https://github.com/astrand/xclip) (optional, for clipboard support)
+  - [xdotool](https://github.com/jordansissel/xdotool) (optional, for autofill support)
 - Wayland
-  - [wl-clipboard](https://github.com/bugaevc/wl-clipboard) (optional for clipboard support)
-  - [wtype](https://github.com/atx/wtype) (optional for autofill support)
+  - [wl-clipboard](https://github.com/bugaevc/wl-clipboard) (optional, for clipboard support)
+  - [wtype](https://github.com/atx/wtype) (optional, for autofill support)
 
 # Installation
 
 ```bash
 $ git clone https://github.com/udayvir-singh/pass-menu.git
-
 $ cd pass-menu
 
 # To install pass-menu for the current user:
 $ make install
 
-# To install pass-menu globally for all users:
+# To install pass-menu for all users:
 $ sudo make PREFIX=/usr install
 ```
 
@@ -50,19 +49,19 @@ Refer to `make help` for more details about installation.
 pass-menu [OPTIONS] -- COMMAND [ARGS]
 ```
 
-| Option                                    | Description                                             |
-|-------------------------------------------|---------------------------------------------------------|
-| `-t`, `--type`                            | Type the output.                                        |
-| `-c`, `--clip`                            | Copy the output to the clipboard.                       |
-| `-p`, `--print`                           | Print the output to stdout.                             |
-| `-f`, <code>--filename=**NAME**</code>    | Manually set the password store filename.               |
-| `-k`, <code>--key=**NAME**</code>         | Manually set the password store key.                    |
-| `-l`, <code>--log=**TYPE**</code>         | Set the logger type. (options: compact, human, notify)  |
-| `-F`, <code>--prompt-flag=**FLAG**</code> | Flag passed to `COMMAND` for prompting the user.        |
-| <code>--file-prompt=**PROMPT**</code>     | Prompt message when choosing a password store filename. |
-| <code>--key-prompt=**PROMPT**</code>      | Prompt message when choosing a password store key.      |
-| <code>--mode-prompt=**PROMPT**</code>     | Prompt message when choosing pass-menu mode.            |
-| `-h`, `--help`                            | Print the help message and exit.                        |
+| Option                                  | Description                                             |
+|-----------------------------------------|---------------------------------------------------------|
+| `-t`, `--type`                          | Type the output.                                        |
+| `-c`, `--clip`                          | Copy the output to the clipboard.                       |
+| `-p`, `--print`                         | Print the output to stdout.                             |
+| `-f`, <code>--filename=_NAME_</code>    | Manually set the password store filename.               |
+| `-k`, <code>--key=_NAME_</code>         | Manually set the password store key.                    |
+| `-l`, <code>--log=_TYPE_</code>         | Set the logger type. (options: compact, human, notify)  |
+| `-F`, <code>--prompt-flag=_FLAG_</code> | Flag passed to `COMMAND` for prompting the user.        |
+| <code>--file-prompt=_PROMPT_</code>     | Prompt message when choosing a password store filename. |
+| <code>--key-prompt=_PROMPT_</code>      | Prompt message when choosing a password store key.      |
+| <code>--mode-prompt=_PROMPT_</code>     | Prompt message when choosing pass-menu mode.            |
+| `-h`, `--help`                          | Print the help message and exit.                        |
 
 Refer to `pass-menu --help` or `man pass-menu` for more details.
 
@@ -116,10 +115,10 @@ $ pass-menu --prompt-flag="-p" -- rofi -dmenu
 
 ```bash
 # Basic usage:
-$ pass-menu --print --filename "Github" --key "Password"
+$ pass-menu --print --filename "GitHub" --key "Password"
 
 # The above example also works with actions:
-$ pass-menu --filename "Github" --key "((Autofill))"
+$ pass-menu --filename "GitHub" --key "((Autofill))"
 ```
 
 # Passfile Syntax
@@ -127,7 +126,7 @@ $ pass-menu --filename "Github" --key "((Autofill))"
 `pass-menu` uses its own custom parser for reading passfiles.
 This section provides a brief overview of the passfile syntax.
 
-Here's an example passfile:
+Here is an example password store file:
 
 ```
 correct-horse-battery-staple
@@ -210,13 +209,13 @@ The argument can be either a single word or a string value.
 
 The following table explains all of the action commands:
 
-| Command        | Description                                                                    |
-|----------------|--------------------------------------------------------------------------------|
-| `:tab`         | Press the tab key.                                                             |
-| `:enter`       | Press the enter key.                                                           |
-| `:type <REF>`  | Type the field or OTP that matches the given reference.                        |
-| `:clip <REF>`  | Copy the field or OTP that matches the given reference to the clipboard.       |
-| `:run <REFS>`  | Execute the comma separated list of actions that match the given reference.    |
-| `:log <STR>`   | Log the message with the given string.                                         |
-| `:sleep <DUR>` | Delay for the given amount of time, accepts same arguments as `sleep` command. |
-| `:exec <CMD>`  | Execute the given bash command with `$1` set to the current filename.          |
+| Command        | Description                                                                              |
+|----------------|------------------------------------------------------------------------------------------|
+| `:tab`         | Press the tab key.                                                                       |
+| `:enter`       | Press the enter key.                                                                     |
+| `:type <REF>`  | Type the field or OTP that matches the given reference.                                  |
+| `:clip <REF>`  | Copy the field or OTP that matches the given reference to the clipboard.                 |
+| `:run <REFS>`  | Execute comma separated list of the given action references.                             |
+| `:log <STR>`   | Log the message with the given string.                                                   |
+| `:sleep <DUR>` | Delay execution for the given amount of time, accepts same arguments as `sleep` command. |
+| `:exec <CMD>`  | Execute the given bash command with `$1` set to the current filename.                    |

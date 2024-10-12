@@ -86,9 +86,9 @@ if [ -v WAYLAND_DISPLAY ]; then
 
     type_str () { wtype -; }
 
-    clip_set () { wl-copy $([ "${PASSWORD_STORE_X_SELECTION}" = "primary" ] && printf '%s' "--primary") "${1}"; }
+    clip_set () { wl-copy $([ "${PASSWORD_STORE_X_SELECTION}" = "primary" ] && printf '--primary') "${1}"; }
 
-    clip_get () { wl-paste $([ "${PASSWORD_STORE_X_SELECTION}" = "primary" ] && printf '%s' "--primary"); }
+    clip_get () { wl-paste $([ "${PASSWORD_STORE_X_SELECTION}" = "primary" ] && printf '--primary'); }
 else
     readonly DISPLAY_NAME="${DISPLAY:-none}"
 
@@ -178,10 +178,9 @@ run_action () {
     local ARRAY; readarray ARRAY
 
     # run commands
-    local LEN=${#ARRAY[@]}
     local IDX
 
-    for (( IDX = 0; IDX < LEN; IDX += 2 )); do
+    for (( IDX = 0; IDX < ${#ARRAY[@]}; IDX += 2 )); do
         local CMD="${ARRAY[${IDX}]}"
         local ARG="${ARRAY[(( IDX + 1))]}"
 
@@ -311,7 +310,6 @@ readarray () {
 readassoc () {
     local VAR="${1}"
     local ARR; readarray ARR
-    local LEN=${#ARR[@]}
     local IDX
 
     if [ ! "$(getattr "${VAR}")" = 'A' ]; then
@@ -319,7 +317,7 @@ readassoc () {
         declare -gA "${VAR}=()"
     fi
 
-    for (( IDX = 0; IDX < LEN; IDX += 2 )); do
+    for (( IDX = 0; IDX < ${#ARR[@]}; IDX += 2 )); do
         local KEY="${ARR[${IDX}]}"
         local VAL="${ARR[(( IDX + 1 ))]?Missing value after key}"
 
@@ -470,7 +468,7 @@ internal_error () {
 }
 
 use_error () {
-    internal_error "Invalid use of ${FUNCNAME[@]:1:1} function" "$(format_lineno)"
+    internal_error "Invalid use of ${FUNCNAME[1]} function" "$(format_lineno)"
 }
 
 
